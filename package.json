@@ -20,5 +20,13 @@
     "mercadopago": "^2.12.0",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davimatheus-collab/bot-saas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davimatheus-collab/bot-saas/issues"
+  },
+  "homepage": "https://github.com/davimatheus-collab/bot-saas#readme"
 }
