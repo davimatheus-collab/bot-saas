@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SaaS Bot Painel</title>
+</head>
+<body>
+
+<h1>🚀 Painel SaaS</h1>
+
+<h2>➕ Criar Cliente</h2>
+
+<form action="/create-client" method="GET">
+    <input name="id" placeholder="nome do cliente" />
+    <button type="submit">Criar</button>
+</form>
+
+<h2>📊 Status dos Clientes</h2>
+
+<ul>
+<% clients.forEach(client => { %>
+    <li>
+        <strong><%= client %></strong> →
+        <span id="status-<%= client %>">verificando...</span>
+
+        <br>
+
+        <img id="qr-<%= client %>" width="180" style="margin-top:10px; display:none;" />
+    </li>
+    <hr>
+<% }) %>
+</ul>
+
+<script>
+async function loadStatus() {
+    const res = await fetch("/status")
+    const data = await res.json()
+
+    Object.keys(data).forEach(client => {
+        const statusEl = document.getElementById("status-" + client)
+        const qrEl = document.getElementById("qr-" + client)
+
+        const value = data[client]
+
+        if (!value) return
+
+        if (value === "ONLINE") {
+            statusEl.innerHTML = "🟢 ONLINE"
+            if (qrEl) qrEl.style.display = "none"
+        }
+
+        else if (value === "OFFLINE") {
+            statusEl.innerHTML = "🔴 OFFLINE"
+        }
+
+        else if (value === "CONECTANDO") {
+            statusEl.innerHTML = "🟡 CONECTANDO"
+            if (qrEl) qrEl.style.display = "none"
+        }
+
+        else if (value.status === "QR") {
+            statusEl.innerHTML = "📲 QR CODE"
+            if (qrEl) {
+                qrEl.src = value.qr
+                qrEl.style.display = "block"
+            }
+        }
+    })
+}
+
+setInterval(loadStatus, 3000)
+loadStatus()
+</script>
+
+</body>
+</html>
