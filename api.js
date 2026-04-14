@@ -1,13 +1,12 @@
 const express = require("express");
 const session = require("express-session");
 const path = require("path");
-const fs = require("fs");
 
 const { MercadoPagoConfig, Preference } = require("mercadopago");
 
 const app = express();
 
-// ================= PORTA (RENDER OK) =================
+// ================= PORTA RENDER =================
 const PORT = process.env.PORT || 3000;
 
 // ================= MIDDLEWARE =================
@@ -24,7 +23,7 @@ app.use(session({
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ================= MERCADO PAGO (NOVO SDK) =================
+// ================= MERCADO PAGO (CORRETO NOVO SDK) =================
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
@@ -36,7 +35,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// ================= ROTA ASSINATURA =================
+// ================= ASSINATURA =================
 app.get("/assinar", async (req, res) => {
   try {
     const preference = new Preference(client);
@@ -62,7 +61,7 @@ app.get("/assinar", async (req, res) => {
 
     res.redirect(result.init_point);
   } catch (err) {
-    console.log("Erro pagamento:", err);
+    console.log("❌ Erro ao gerar pagamento:", err);
     res.send("Erro ao gerar pagamento");
   }
 });
@@ -71,19 +70,13 @@ app.get("/assinar", async (req, res) => {
 app.post("/webhook", (req, res) => {
   console.log("🔔 Webhook recebido:", req.body);
 
-  // Aqui futuramente ativa assinatura do usuário
-  const data = req.body;
-
-  if (data.type === "payment") {
-    console.log("💰 Pagamento aprovado → ativar usuário");
-  }
-
+  // Aqui depois vira liberação automática
   res.sendStatus(200);
 });
 
 // ================= ROTAS AUX =================
 app.get("/sucesso", (req, res) => {
-  res.send("Pagamento aprovado! Assinatura ativa 🚀");
+  res.send("Pagamento aprovado 🚀 Assinatura ativa!");
 });
 
 app.get("/erro", (req, res) => {
@@ -94,7 +87,7 @@ app.get("/pendente", (req, res) => {
   res.send("Pagamento pendente ⏳");
 });
 
-// ================= START SERVER =================
+// ================= START =================
 app.listen(PORT, () => {
   console.log(`🚀 SaaS rodando na porta ${PORT}`);
 });
