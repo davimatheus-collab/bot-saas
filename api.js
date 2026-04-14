@@ -1,8 +1,9 @@
 const express = require("express");
 const session = require("express-session");
-const mercadopago = require("mercadopago");
 const path = require("path");
 const fs = require("fs");
+
+const { MercadoPagoConfig, Preference } = require("mercadopago");
 
 const app = express();
 
@@ -23,9 +24,9 @@ app.use(session({
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ================= MERCADO PAGO =================
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN
+// ================= MERCADO PAGO (NOVO SDK) =================
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN
 });
 
 // ================= HOME =================
@@ -35,29 +36,33 @@ app.get("/", (req, res) => {
   });
 });
 
-// ================= ROTA DE ASSINATURA =================
+// ================= ROTA ASSINATURA =================
 app.get("/assinar", async (req, res) => {
   try {
-    const preference = await mercadopago.preferences.create({
-      items: [
-        {
-          title: "Assinatura SaaS Premium",
-          quantity: 1,
-          currency_id: "BRL",
-          unit_price: 19.90
-        }
-      ],
-      back_urls: {
-        success: "https://bot-saas-yu2n.onrender.com/sucesso",
-        failure: "https://bot-saas-yu2n.onrender.com/erro",
-        pending: "https://bot-saas-yu2n.onrender.com/pendente"
-      },
-      auto_return: "approved"
+    const preference = new Preference(client);
+
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            title: "Assinatura SaaS Premium",
+            quantity: 1,
+            unit_price: 19.90,
+            currency_id: "BRL"
+          }
+        ],
+        back_urls: {
+          success: "https://bot-saas-yu2n.onrender.com/sucesso",
+          failure: "https://bot-saas-yu2n.onrender.com/erro",
+          pending: "https://bot-saas-yu2n.onrender.com/pendente"
+        },
+        auto_return: "approved"
+      }
     });
 
-    res.redirect(preference.body.init_point);
+    res.redirect(result.init_point);
   } catch (err) {
-    console.log("Erro assinatura:", err);
+    console.log("Erro pagamento:", err);
     res.send("Erro ao gerar pagamento");
   }
 });
@@ -66,11 +71,11 @@ app.get("/assinar", async (req, res) => {
 app.post("/webhook", (req, res) => {
   console.log("🔔 Webhook recebido:", req.body);
 
-  // Aqui você vai ativar usuário depois
+  // Aqui futuramente ativa assinatura do usuário
   const data = req.body;
 
   if (data.type === "payment") {
-    console.log("💰 Pagamento detectado → ativar assinatura");
+    console.log("💰 Pagamento aprovado → ativar usuário");
   }
 
   res.sendStatus(200);
@@ -89,7 +94,7 @@ app.get("/pendente", (req, res) => {
   res.send("Pagamento pendente ⏳");
 });
 
-// ================= START =================
+// ================= START SERVER =================
 app.listen(PORT, () => {
   console.log(`🚀 SaaS rodando na porta ${PORT}`);
-});S
+});
